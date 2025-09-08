@@ -1,9 +1,10 @@
 import express from "express";
+import { ENV } from "./config/env.config.js";
+import { connectToMongoDB } from "./config/db.config.js";
 
 const app = express();
 
-const PORT = process.env.PORT || 5001;
-
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}/`);
+app.listen(ENV.PORT, () => {
+  connectToMongoDB()
+  console.log(`Server running on http://localhost:${ENV.PORT}/`);
 });
