@@ -2,7 +2,7 @@ import { Router } from "express";
 import asyncHandler from "express-async-handler";
 import User from "../models/User.model.js";
 import { protectRoute } from "../middleware/auth.middleware.js";
-import { getAuth } from "@clerk/express";
+import { clerkClient, getAuth } from "@clerk/express";
 
 const router = Router();
 
@@ -21,6 +21,38 @@ router.get(
 );
 
 router.use(protectRoute);
+
+router.post(
+  "/sync",
+  asyncHandler(async (req, res) => {
+    const { userId } = getAuth(req);
+
+    //check if user already exists in mongoDB
+    const userExist = await User.findOne({ clerkId: userId });
+
+    if (userExist)
+      return res
+        .status(200)
+        .json({ user: userExist, message: "User already exists" });
+
+    // create new user from Clerk data
+    const clerkUser = await clerkClient.users.getUser(userId);
+
+    const userData = {
+      clerkId: userId,
+      email: clerkUser.emailAddresses[0].emailAddress,
+      firstname: clerkUser.firstName || "",
+      lastname: clerkUser.lastName || "",
+      username: clerkUser.emailAddresses[0].split("@")[0],
+      profilePicture: clerkUser.imageUrl || "",
+    };
+
+    // save the user to the DB
+    const user = await User.create(userData);
+
+    res.status(201).json({ user, message: "user created successfully" });
+  })
+);
 
 //update profile => one needs to be authenitcated
 router.put(
