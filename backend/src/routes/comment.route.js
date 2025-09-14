@@ -6,6 +6,7 @@ import Notification from "../models/Notification.model.js";
 import Comment from "../models/Comment.model.js";
 import Post from "../models/Post.model.js";
 import User from "../models/User.model.js";
+import mongoose from "mongoose";
 
 const router = Router();
 
@@ -47,16 +48,28 @@ router.post(
     if (!user || !post)
       return res.status(404).json({ error: "User or post not found" });
 
-    const comment = await Comment.create({
-      user: user._id,
-      post: postId,
-      content,
-    });
+    //TRANSACTION
+    const session = await mongoose.startSession();
+    let comment;
+    try {
+      await session.withTransaction(async () => {
+        comment = await Comment.create(
+          {
+            user: user._id,
+            post: postId,
+            content,
+          },
+          { session }
+        );
 
-    // link the comment to the post
-    await Post.findByIdAndUpdate(postId, {
-      $push: { comments: comment._id },
-    });
+        // link the comment to the post
+        await Post.findByIdAndUpdate(postId, {
+          $push: { comments: comment._id },
+        });
+      });
+    } finally{
+        await session.endSession()
+    }
 
     // create notification if not commenting on own post
     if (post.user.toString() !== user._id.toString()) {
