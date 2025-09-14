@@ -27,7 +27,13 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: err.message || "Internal server error " });
 });
 
-app.listen(ENV.PORT, () => {
-  connectToMongoDB();
-  console.log(`Server running on http://localhost:${ENV.PORT}/`);
-});
+// Optimization for vercel bcoz it uses serverless so it listsns only in developement not production
+if (ENV.NODE_ENV !== "production") {
+  app.listen(ENV.PORT, () => {
+    connectToMongoDB();
+    console.log(`Server running on http://localhost:${ENV.PORT}/`);
+  });
+}
+
+//for vercel
+export default app;
