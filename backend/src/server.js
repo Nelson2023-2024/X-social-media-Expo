@@ -20,7 +20,7 @@ app.use("/api/posts", postRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/comment", commentRoutes);
 
-app.use((err, req, res) => {
+app.use((err, req, res, next) => {
   console.error("Unhandled error:", err);
   res.status(500).json({ error: err.message || "Internal server error " });
 });
