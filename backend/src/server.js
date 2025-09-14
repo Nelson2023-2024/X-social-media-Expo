@@ -20,6 +20,11 @@ app.use("/api/posts", postRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/comment", commentRoutes);
 
+app.use((err, req, res) => {
+  console.error("Unhandled error:", err);
+  res.status(500).json({ error: err.message || "Internal server error " });
+});
+
 app.listen(ENV.PORT, () => {
   connectToMongoDB();
   console.log(`Server running on http://localhost:${ENV.PORT}/`);
